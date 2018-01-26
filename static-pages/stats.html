@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+
+
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Popper JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <script src="static-pages/stats.js"></script>
+    <link rel="stylesheet" href="static-pages/stats.css">
+
+</head>
+
+
+<body>
+
+
+<nav class="navbar navbar-expand-sm bg-primary navbar-dark navbar-custom sticky-top">
+    <a href="#" class="navbar-brand">מכביפדיה</a>
+    <div class="navbar-collapse collapse">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#players-stats">שחקנים </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#coaches-stats">מאמנים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#games">משחקים</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#streak-stats">רצפים</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+
+<div ng-app="MaccabiStatsApp" ng-controller="MaccabiStatsController">
+    <div class="col-md-10 div-left">
+        <table>
+            <tr>
+                <td>
+                    <label>Select location </label>
+                </td>
+                <td>
+                    <select class="col-md-5" ng-model="SelectedLocation">
+                        <option ng-repeat="x in LocationOptions">{{x}}</option>
+                    </select>
+                </td>
+                <td rowspan="7" style="padding-left: 25px">
+                    <div class="div-left" ng-if="msg">
+                            <pre>
+                                {{msg}}
+                            </pre>
+                    </div>
+                    <div class="div-left" ng-if="limit">
+
+                    </div>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Only wins</label>
+                </td>
+                <td>
+                    <input class="form-check-input" type="checkbox" ng-model="OnlyWins">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Select opponent</label>
+                </td>
+                <td>
+                    <select class="col-md-12" ng-model="SelectedOpponent">
+                        <option ng-repeat="op in AvailableOpponents | orderBy:op"> {{op}}</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Before Date</label>
+                </td>
+                <td>
+                    <input type="date" class="form-control col-md-12" ng-model="BeforeDate">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>After Date</label>
+                </td>
+                <td>
+                    <input type="date" class="form-control col-md-12" ng-model="AfterDate">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label>Competition</label>
+                </td>
+                <td>
+                    <select class="col-md-12" ng-model="SelectedCompetition">
+                        <option ng-repeat="cmp in AvailableCompetitions  | orderBy:cmp"> {{cmp}}</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button ng-click="getstats()" ng-disabled="!got_competitions || !got_opponents">get stats</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="col-md-12 div-left" id="games">
+
+    </div>
+
+
+    <div class="col-md-12 collapse in div-left" id="streak-stats">
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=bestScorers>
+                <caption>רצפים</caption>
+                <thead class="thead-dark">
+                <th>תיאור</th>
+                <th>מספר משחקים</th>
+                </thead>
+                <tbody>
+                <tr ng-if=longestWinsStreakGames>
+                    <td>רצף נצחונות</td>
+                    <td>{{ longestWinsStreakGames.length }}</td>
+                </tr>
+                <tr ng-if=longestUnbeatenStreakGames>
+                    <td>רצף ללא הפסד</td>
+                    <td>{{ longestUnbeatenStreakGames.length}}</td>
+                </tr>
+                <tr ng-if=longestScoredStreakGames>
+                    <td>רצף משחקים שבהם מכבי כבשה</td>
+                    <td>{{ longestScoredStreakGames.length }}</td>
+                </tr>
+                <tr ng-if=longestCleanSheetStreakGames>
+                    <td>רצף משחקים ללא ספיגה</td>
+                    <td>{{ longestCleanSheetStreakGames.length }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-12 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=longestWinsStreakGames>
+                <caption>רצף נצחונות</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>תאריך</th>
+                    <th>אצטדיון</th>
+                    <th>קהל</th>
+                    <th>שופט</th>
+                    <th>שם קבוצת בית</th>
+                    <th>תוצאה קבוצת בית</th>
+                    <th>מאמן קבוצת בית</th>
+                    <th>שם קבוצת חוץ</th>
+                    <th>תוצאה קבוצת חוץ</th>
+                    <th>מאמן קבוצת חוץ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="game in longestWinsStreakGames| limitTo:limit">
+                    <td>{{ game.date }}</td>
+                    <td>{{ game.stadium }}</td>
+                    <td>{{ game.crowd }}</td>
+                    <td>{{ game.referee }}</td>
+                    <td>{{ game.home_team.name }}</td>
+                    <td>{{ game.home_team.score }}</td>
+                    <td>{{ game.home_team.coach }}</td>
+                    <td>{{ game.away_team.name }}</td>
+                    <td>{{ game.away_team.score }}</td>
+                    <td>{{ game.away_team.coach }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-12 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=longestUnbeatenStreakGames>
+                <caption>רצף ללא הפסד</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>תאריך</th>
+                    <th>אצטדיון</th>
+                    <th>קהל</th>
+                    <th>שופט</th>
+                    <th>שם קבוצת בית</th>
+                    <th>תוצאה קבוצת בית</th>
+                    <th>מאמן קבוצת בית</th>
+                    <th>שם קבוצת חוץ</th>
+                    <th>תוצאה קבוצת חוץ</th>
+                    <th>מאמן קבוצת חוץ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="game in longestUnbeatenStreakGames| limitTo:limit">
+                    <td>{{ game.date }}</td>
+                    <td>{{ game.stadium }}</td>
+                    <td>{{ game.crowd }}</td>
+                    <td>{{ game.referee }}</td>
+                    <td>{{ game.home_team.name }}</td>
+                    <td>{{ game.home_team.score }}</td>
+                    <td>{{ game.home_team.coach }}</td>
+                    <td>{{ game.away_team.name }}</td>
+                    <td>{{ game.away_team.score }}</td>
+                    <td>{{ game.away_team.coach }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-12 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=longestScoredStreakGames>
+                <caption>רצף בו מכבי כבשה</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>תאריך</th>
+                    <th>אצטדיון</th>
+                    <th>קהל</th>
+                    <th>שופט</th>
+                    <th>שם קבוצת בית</th>
+                    <th>תוצאה קבוצת בית</th>
+                    <th>מאמן קבוצת בית</th>
+                    <th>שם קבוצת חוץ</th>
+                    <th>תוצאה קבוצת חוץ</th>
+                    <th>מאמן קבוצת חוץ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="game in longestScoredStreakGames| limitTo:limit">
+                    <td>{{ game.date }}</td>
+                    <td>{{ game.stadium }}</td>
+                    <td>{{ game.crowd }}</td>
+                    <td>{{ game.referee }}</td>
+                    <td>{{ game.home_team.name }}</td>
+                    <td>{{ game.home_team.score }}</td>
+                    <td>{{ game.home_team.coach }}</td>
+                    <td>{{ game.away_team.name }}</td>
+                    <td>{{ game.away_team.score }}</td>
+                    <td>{{ game.away_team.coach }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-12 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=longestCleanSheetStreakGames>
+                <caption>רצף ללא ספיגה</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>תאריך</th>
+                    <th>אצטדיון</th>
+                    <th>קהל</th>
+                    <th>שופט</th>
+                    <th>שם קבוצת בית</th>
+                    <th>תוצאה קבוצת בית</th>
+                    <th>מאמן קבוצת בית</th>
+                    <th>שם קבוצת חוץ</th>
+                    <th>תוצאה קבוצת חוץ</th>
+                    <th>מאמן קבוצת חוץ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="game in longestCleanSheetStreakGames| limitTo:limit">
+                    <td>{{ game.date }}</td>
+                    <td>{{ game.stadium }}</td>
+                    <td>{{ game.crowd }}</td>
+                    <td>{{ game.referee }}</td>
+                    <td>{{ game.home_team.name }}</td>
+                    <td>{{ game.home_team.score }}</td>
+                    <td>{{ game.home_team.coach }}</td>
+                    <td>{{ game.away_team.name }}</td>
+                    <td>{{ game.away_team.score }}</td>
+                    <td>{{ game.away_team.coach }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="col-md-10 div-left" id="players-stats">
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=bestScorers>
+                <caption>כובשים</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>שערים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in bestScorers | limitTo:limit">
+                    <td>{{ player.goals }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=bestAssisters>
+                <caption>מבשלים</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>בישולים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in bestAssisters | limitTo:limit">
+                    <td>{{ player.assists }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=mostYellowCarded>
+                <caption>כרטיסים צהובים</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>כרטיסים צהובים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostYellowCarded | limitTo:limit">
+                    <td>{{ player.yellow_cards }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=mostLineupPlayers>
+                <caption>פתיחה בהרכב</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים שפתח</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostLineupPlayers | limitTo:limit">
+                    <td>{{ player.lineup }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <div class="col-md-10 collapse in div-left" id="coaches-stats">
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=mostTrainedCoach>
+                <caption>מאמנים שאימנו</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים שאימן</th>
+                    <th>שם מאמן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="coach in mostTrainedCoach | limitTo:limit">
+                    <td>{{ coach.trained }}</td>
+                    <td>{{ coach.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=mostWinnerCoach>
+                <caption>מאמנים שניצחו הכי הרבה</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים שניצח</th>
+                    <th>שם מאמן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="coach in mostWinnerCoach | limitTo:limit">
+                    <td>{{ coach.wins }}</td>
+                    <td>{{ coach.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=mostLoserCoach>
+                <caption>מאמנים שהפסידו הכי הרבה</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים שהפסיד</th>
+                    <th>שם מאמן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="coach in mostLoserCoach | limitTo:limit">
+                    <td>{{ coach.losses }}</td>
+                    <td>{{ coach.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=mostWinnerCoachByPercentage>
+                <caption>מאמנים שניצחו הכי הרבה באחוזים</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים שאימן</th>
+                    <th>משחקים שניצח %</th>
+                    <th>שם מאמן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="coach in mostWinnerCoachByPercentage | limitTo:limit">
+                    <td>{{ coach.gamess_trained }}</td>
+                    <td>{{ coach.wins_percentages }}</td>
+                    <td>{{ coach.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm" ng-if=mostLoserCoachByPercentage>
+                <caption>מאמנים שהפסידו הכי הרבה באחוזים</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים שאימן</th>
+                    <th>משחקים שהפסיד %</th>
+                    <th>שם מאמן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="coach in mostLoserCoachByPercentage | limitTo:limit">
+                    <td>{{ coach.gamess_trained }}</td>
+                    <td>{{ coach.losses_percentages }}</td>
+                    <td>{{ coach.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+
+</div>
+</body>
+
+</html>
