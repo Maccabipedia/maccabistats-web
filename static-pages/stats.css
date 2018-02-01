@@ -29,3 +29,11 @@
  .table-striped > tbody > tr:nth-child(even) {
      background-color: rgba(255, 255, 117, 0.58);
  }
+ .sort-icon {
+     font-size: 9px;
+     margin-left: 5px;
+ }
+
+ th {
+     cursor:pointer;
+ }

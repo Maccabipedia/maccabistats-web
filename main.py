@@ -1,5 +1,7 @@
 import os
 import pickle
+import uuid
+import time
 
 from dateutil import parser as date_parser
 from flask import Flask, request, jsonify, session
@@ -22,15 +24,33 @@ def main_page():
     return app.send_static_file("stats.html")
 
 
+@app.route("/api/request", methods=["POST"])
+def save_user_request():
+    request_folder_path = os.path.dirname(os.path.abspath(__file__))
+
+    random_file_name = uuid.uuid4().hex
+    random_file_path = os.path.join(request_folder_path, "requests_from_site", random_file_name + ".txt")
+
+    with open(random_file_path, 'w') as request_file:
+        request_file.write(str(request.json))
+        request_file.write("\n\n")
+        request_file.write(time.ctime())
+
+    return jsonify("OK")
+
+
 @app.route("/api/stats", methods=["POST"])
 def stats():
-
     games = get_maccabi_stats()
 
     games = filter_by_home_or_away(games, request.json['location'])
     games = filter_by_competition(games, request.json['competition'])
-    games = filter_by_wins(games, request.json['only_wins'])
     games = filter_by_opponent(games, request.json['opponent'])
+    games = filter_by_stadium(games, request.json['stadium'])
+    games = filter_by_coach(games, request.json['coach'])
+    games = filter_by_referee(games, request.json['referee'])
+    games = filter_by_player_name(games, request.json['player'])
+    games = filter_by_wins(games, request.json['only_wins'])
     games = filter_by_date(games, request.json['before_date'], request.json['after_date'])
     answer = "Maccabi Stats : {games}".format(games=repr(games))
 
@@ -40,98 +60,54 @@ def stats():
     return answer
 
 
-@app.route("/api/opponents", methods=["GET"])
-def get_opponents():
+@app.route("/api/games", methods=["GET"])
+def get_games():
+    g = load_session_games_from_disk()
+    return jsonify([game.json_dict() for game in g.games])
+
+
+@app.route("/api/games_filters", methods=["GET"])
+def get_games_filters():
     g = get_maccabi_stats()
-    return jsonify(list(g.available_opponents))
+    return jsonify(dict(
+        opponents=list(g.available_opponents),
+        coaches=list(g.available_coaches),
+        referees=list(g.available_referees),
+        competitions=list(g.available_competitions),
+        stadiums=list(g.available_stadiums),
+        players=list(set(player.name for player in g.available_players))
+        # Set is to avoid dups in client side, list is to allow json it.
+    ))
 
 
-@app.route("/api/competitions", methods=["GET"])
-def get_competitions():
-    g = get_maccabi_stats()
-    return jsonify(list(g.available_competitions))
-
-
-@app.route("/api/best_scorers", methods=["GET"])
-def get_best_scorers():
+@app.route("/api/top_players_stats", methods=["GET"])
+def get_top_players_stats():
     games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, goals=t[1]) for t in games.players.best_scorers])
+    return jsonify(dict(
+        best_scorers=[dict(t[0].__dict__, goals=t[1]) for t in games.players.best_scorers],
+        best_assisters=[dict(t[0].__dict__, assists=t[1]) for t in games.players.best_assisters],
+        most_yellow_carded=[dict(t[0].__dict__, yellow_cards=t[1]) for t in games.players.most_yellow_carded],
+        most_red_carded=[dict(t[0].__dict__, red_cards=t[1]) for t in games.players.most_red_carded],
+        most_substitute_off=[dict(t[0].__dict__, subs_off=t[1]) for t in games.players.most_substitute_off],
+        most_substitute_in=[dict(t[0].__dict__, subs_in=t[1]) for t in games.players.most_substitute_in],
+        most_lineup=[dict(t[0].__dict__, lineup=t[1]) for t in games.players.most_lineup_players],
+        most_captain=[dict(t[0].__dict__, captain_times=t[1]) for t in games.players.most_captains],
+        most_penalty_missed=[dict(t[0].__dict__, penalty_missed=t[1]) for t in games.players.most_penalty_missed],
+        most_played=[dict(t[0].__dict__, played=t[1]) for t in games.players.most_played]))
 
 
-@app.route("/api/best_assisters", methods=["GET"])
-def get_best_assisters():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, assists=t[1]) for t in games.players.best_assisters])
-
-
-@app.route("/api/most_yellow_carded", methods=["GET"])
-def get_most_yellow_carded():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, yellow_cards=t[1]) for t in games.players.most_yellow_carded])
-
-
-@app.route("/api/most_red_carded", methods=["GET"])
-def get_most_red_carded():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, red_cards=t[1]) for t in games.players.most_red_carded])
-
-
-@app.route("/api/most_substitute_off", methods=["GET"])
-def get_most_substitute_off():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, subs_off=t[1]) for t in games.players.most_substitute_off])
-
-
-@app.route("/api/most_substitute_in", methods=["GET"])
-def get_most_substitute_in():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, subs_in=t[1]) for t in games.players.most_substitute_in])
-
-
-@app.route("/api/most_lineup_players", methods=["GET"])
-def get_most_lineup_players():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, lineup=t[1]) for t in games.players.most_lineup_players])
-
-
-@app.route("/api/most_captains", methods=["GET"])
-def get_most_captains():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, captain_times=t[1]) for t in games.players.most_captains])
-
-
-@app.route("/api/most_penalty_missed", methods=["GET"])
-def get_most_penalty_missed():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, penalty_missed=t[1]) for t in games.players.most_penalty_missed])
-
-
-@app.route("/api/most_played", methods=["GET"])
-def get_most_played():
-    games = load_session_games_from_disk()
-    return jsonify([dict(t[0].__dict__, played=t[1]) for t in games.players.most_played])
-
-
-@app.route("/api/most_trained_coach", methods=["GET"])
+@app.route("/api/top_coaches_stats", methods=["GET"])
 def get_most_trained_coach():
     games = load_session_games_from_disk()
-    return jsonify([dict(name=t[0], trained=t[1]) for t in games.coaches.most_trained_coach])
+    return jsonify(dict(
+        most_trained=[dict(name=t[0], trained=t[1]) for t in games.coaches.most_trained_coach],
+        most_winner=[dict(name=t[0], wins=t[1]) for t in games.coaches.most_winner_coach],
+        most_loser=[dict(name=t[0], losses=t[1]) for t in games.coaches.most_loser_coach],
+        most_winner_by_percentage=_get_most_winner_coach_by_percentage(),
+        most_loser_by_percentage=_get_most_loser_coach_by_percentage()))
 
 
-@app.route("/api/most_winner_coach", methods=["GET"])
-def get_most_winner_coach():
-    games = load_session_games_from_disk()
-    return jsonify([dict(name=t[0], wins=t[1]) for t in games.coaches.most_winner_coach])
-
-
-@app.route("/api/most_loser_coach", methods=["GET"])
-def get_most_loser_coach():
-    games = load_session_games_from_disk()
-    return jsonify([dict(name=t[0], losses=t[1]) for t in games.coaches.most_loser_coach])
-
-
-@app.route("/api/most_winner_coach_by_percentage", methods=["GET"])
-def get_most_winner_coach_by_percentage():
+def _get_most_winner_coach_by_percentage():
     games = load_session_games_from_disk()
     most_winner_coach = []
 
@@ -140,13 +116,12 @@ def get_most_winner_coach_by_percentage():
         games_trained = item[0].split("-")[1].strip()
         percentages = item[1]
 
-        most_winner_coach.append(dict(name=name, gamess_trained=games_trained, wins_percentages=percentages))
+        most_winner_coach.append(dict(name=name, games_trained=games_trained, wins_percentages=percentages))
 
-    return jsonify(most_winner_coach)
+    return most_winner_coach
 
 
-@app.route("/api/most_loser_coach_by_percentage", methods=["GET"])
-def get_most_loser_coach_by_percentage():
+def _get_most_loser_coach_by_percentage():
     games = load_session_games_from_disk()
     most_loser_coaches = []
 
@@ -155,57 +130,52 @@ def get_most_loser_coach_by_percentage():
         games_trained = item[0].split("-")[1].strip()
         percentages = item[1]
 
-        most_loser_coaches.append(dict(name=name, gamess_trained=games_trained, losses_percentages=percentages))
+        most_loser_coaches.append(dict(name=name, games_trained=games_trained, losses_percentages=percentages))
 
-    return jsonify(most_loser_coaches)
+    return most_loser_coaches
 
 
-@app.route("/api/longest_wins_streak_games", methods=["GET"])
-def get_longest_wins_streak_games():
+@app.route("/api/longest_streaks", methods=["GET"])
+def get_longest_streaks():
     games = load_session_games_from_disk()
-    return jsonify([game.json_dict() for game in games.streaks.get_longest_wins_streak_games()])
+    return jsonify(dict(
+        wins=[game.json_dict() for game in games.streaks.get_longest_wins_streak_games()],
+        unbeaten=[game.json_dict() for game in games.streaks.get_longest_unbeaten_streak_games()],
+        scored=[game.json_dict() for game in games.streaks.get_longest_score_at_least_games(1)],
+        clean_sheet=[game.json_dict() for game in games.streaks.get_longest_clean_sheet_games()],
+        goals_from_bench=[game.json_dict() for game in games.streaks.get_longest_goals_from_bench_games()]))
 
 
-@app.route("/api/longest_wins_streak_length", methods=["GET"])
-def get_longest_wins_streak_length():
+@app.route("/api/averages", methods=["GET"])
+def get_average_goals_for_maccabi():
     games = load_session_games_from_disk()
-    return jsonify(games.streaks.get_longest_wins_streak_length())
+    return jsonify(dict(goals_for_maccabi=games.averages.goals_for_maccabi,
+                        goals_against_maccabi=games.averages.goals_against_maccabi))
 
 
-@app.route("/api/longest_unbeaten_streak_games", methods=["GET"])
-def get_longest_unbeaten_streak_games():
+@app.route("/api/results_summary", methods=["GET"])
+def get_results_summary():
     games = load_session_games_from_disk()
-    return jsonify([game.json_dict() for game in games.streaks.get_longest_unbeaten_streak_games()])
+    total_goals_for_maccabi = sum(game.maccabi_team.score for game in games)
+    total_goals_againt_maccabi = sum(game.not_maccabi_team.score for game in games)
+
+    return jsonify(dict(wins_count=games.results.wins_count,
+                        losses_count=games.results.losses_count,
+                        ties_count=games.results.ties_count,
+                        total_goals_for_maccabi=total_goals_for_maccabi,
+                        total_goals_against_maccabi=total_goals_againt_maccabi))
 
 
-@app.route("/api/longest_unbeaten_streak_length", methods=["GET"])
-def get_longest_unbeaten_streak_length():
+@app.route("/api/average_goals_for_maccabi", methods=["GET"])
+def get_averages():
     games = load_session_games_from_disk()
-    return jsonify(games.streaks.get_longest_unbeaten_streak_length())
+    return jsonify(games.averages.goals_for_maccabi)
 
 
-@app.route("/api/longest_score_streak_games", methods=["GET"])
-def get_longest_score_at_least_games():
+@app.route("/api/average_goals_against_maccabi", methods=["GET"])
+def get_average_goals_against_maccabi():
     games = load_session_games_from_disk()
-    return jsonify([game.json_dict() for game in games.streaks.get_longest_score_at_least_games(1)])
-
-
-@app.route("/api/longest_score_streak_length", methods=["GET"])
-def get_longest_score_streak_length():
-    games = load_session_games_from_disk()
-    return jsonify(games.streaks.get_longest_score_at_least_length(1))
-
-
-@app.route("/api/longest_clean_sheet_streak_games", methods=["GET"])
-def get_longest_clean_sheet_streak_games():
-    games = load_session_games_from_disk()
-    return jsonify([game.json_dict() for game in games.streaks.get_longest_clean_sheet_games()])
-
-
-@app.route("/api/longest_clean_sheet_streak_length", methods=["GET"])
-def get_longest_clean_sheet_streak_length():
-    games = load_session_games_from_disk()
-    return jsonify(games.streaks.get_longest_clean_sheet_length())
+    return jsonify(games.averages.goals_against_maccabi)
 
 
 def filter_by_date(maccabi_games, before_date, after_date):
@@ -230,15 +200,47 @@ def filter_by_wins(maccabi_games, only_wins):
 
 def filter_by_opponent(maccabi_games, opponent):
     opponent = opponent.strip()
-    if opponent == "הכל":
+    if opponent == "All":
         return maccabi_games
     else:
         return maccabi_games.get_games_against_team(opponent)
 
 
+def filter_by_stadium(maccabi_games, stadium):
+    stadium = stadium.strip()
+    if stadium == "All":
+        return maccabi_games
+    else:
+        return maccabi_games.get_games_by_stadium(stadium)
+
+
+def filter_by_coach(maccabi_games, coach):
+    coach = coach.strip()
+    if coach == "All":
+        return maccabi_games
+    else:
+        return maccabi_games.get_games_by_coach(coach)
+
+
+def filter_by_referee(maccabi_games, referee):
+    referee = referee.strip()
+    if referee == "All":
+        return maccabi_games
+    else:
+        return maccabi_games.get_games_by_referee(referee)
+
+
+def filter_by_player_name(maccabi_games, player_name):
+    player_name = player_name.strip()
+    if player_name == "All":
+        return maccabi_games
+    else:
+        return maccabi_games.get_games_by_player_name(player_name)
+
+
 def filter_by_competition(maccabi_games, competition):
     competition = competition.strip()
-    if competition == "הכל":
+    if competition == "All":
         return maccabi_games
     elif competition == "ליגה ראשונה":
         return maccabi_games.get_first_league_games()
@@ -247,7 +249,7 @@ def filter_by_competition(maccabi_games, competition):
 
 
 def filter_by_home_or_away(maccabi_games, location):
-    if location == "הכל":
+    if location == "All":
         return maccabi_games
     elif location == "בית":
         return maccabi_games.home_games

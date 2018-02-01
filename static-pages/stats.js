@@ -1,11 +1,9 @@
-var app = angular.module('MaccabiStatsApp', []);
+var app = angular.module('MaccabiStatsApp', ['angularUtils.directives.dirPagination']);
 app.controller('MaccabiStatsController', function ($scope, $http) {
-    $scope.got_opponents = false;
-    $scope.got_competitions = false;
+
     $scope.All = "הכל";
     $scope.firstLeague = "ליגה ראשונה";
-    $scope.LocationOptions = ["הכל", "בית", "חוץ"];
-    $scope.SelectedLocation = $scope.All;
+    $scope.LocationOptions = ["בית", "חוץ"];
     $scope.OnlyWins = false;
     $scope.AfterDate = new Date("1900");
     $scope.BeforeDate = new Date();
@@ -15,24 +13,23 @@ app.controller('MaccabiStatsController', function ($scope, $http) {
     $scope.getstats = function () {
 
         // Remove current stats
-        $scope.bestScorers = undefined;
-        $scope.bestAssisters = undefined;
-        $scope.mostYellowCarded = undefined;
-        $scope.mostLineupPlayers = undefined;
-        $scope.mostTrainedCoach = undefined;
-        $scope.mostWinnerCoach = undefined;
-        $scope.mostLoserCoach = undefined;
-        $scope.mostWinnerCoachByPercentage = undefined;
-        $scope.mostLoserCoachByPercentage = undefined;
-        $scope.longestWinsStreakGames = undefined;
-        $scope.longestUnbeatenStreakGames= undefined;
-        $scope.longestScoredStreakGames = undefined;
-        $scope.longestCleanSheetStreakGames = undefined;
+        $scope.filteredGames = undefined;
+
+        $scope.topPlayersStats = undefined;
+        $scope.topCoachesStats = undefined;
+        $scope.longestStreaks = undefined;
+
+        $scope.averages = undefined;
+        $scope.resultsSummary = undefined;
 
 
         data = {
             opponent: $scope.SelectedOpponent.trim(),
             location: $scope.SelectedLocation.trim(),
+            stadium: $scope.SelectedStadium.trim(),
+            player: $scope.SelectedPlayer.trim(),
+            referee: $scope.SelectedReferee.trim(),
+            coach: $scope.SelectedCoach.trim(),
             competition: $scope.SelectedCompetition.trim(),
             before_date: $scope.BeforeDate,
             after_date: $scope.AfterDate,
@@ -48,216 +45,177 @@ app.controller('MaccabiStatsController', function ($scope, $http) {
             console.log(response.data);
             
             // Get the new stats from the server
-            $scope.getBestScorers();
-            $scope.getBestAssisters();
-            $scope.getMostYellowCarded();
-            $scope.getMostLineupPlayers();
-            $scope.getMostTrainedCoach();
-            $scope.getMostWinnerCoach();
-            $scope.getMostLoserCoach();
-            $scope.getMostWinnerCoachByPercentage();
-            $scope.getMostLoserCoachByPercentage();
-            $scope.getLongestWinsStreakGames();
-            $scope.getLongestUnbeatenStreakGames();
-            $scope.getLongestScoredStreakGames();
-            $scope.getLongestCleanSheetStreakGames();
+            $scope.getFilteredGames();
+
+            $scope.getTopPlayersStats();
+            $scope.getCoachesStats();
+            $scope.getLongestStreaks();
+
+            $scope.getAverages();
+            $scope.getResultsSummary();
 
         }, function errorCallback(response) {
             $scope.msg = "server error";
         });
     };
 
-    $scope.getAvailableOpponents = function () {
+    $scope.getAvailableGameFilterOptions = function () {
         $http({
             method: 'GET',
-            url: '/api/opponents'
+            url: '/api/games_filters'
         }).then(function successCallback(response) {
-            $scope.SelectedOpponent = $scope.All;
-            $scope.AvailableOpponents = response.data;
-            $scope.AvailableOpponents.push($scope.All);    
-            $scope.got_opponents = true;
-            console.log(response.data)
-        }, function errorCallback(response) {
-            console.log(response)
-        });
-    };
 
-    $scope.getAvailableCompetitions = function () {
-        $http({
-            method: 'GET',
-            url: '/api/competitions'
-        }).then(function successCallback(response) {
-            $scope.SelectedCompetition = $scope.All;
-            $scope.AvailableCompetitions = response.data;
+            $scope.gameFilters = response.data;
+            $scope.AvailableOpponents = $scope.gameFilters.opponents;
+            $scope.AvailableOpponents.push($scope.All);
+
+            $scope.AvailableCoaches = $scope.gameFilters.coaches;
+            $scope.AvailableCoaches.push($scope.All);
+
+            $scope.AvailableReferees = $scope.gameFilters.referees;
+            $scope.AvailableReferees.push($scope.All);
+
+            $scope.AvailableCompetitions = $scope.gameFilters.competitions;
             $scope.AvailableCompetitions.push($scope.All);
             $scope.AvailableCompetitions.push($scope.firstLeague);
-            $scope.got_competitions = true;
+
+            $scope.AvailableStadiums = $scope.gameFilters.stadiums;
+            $scope.AvailableStadiums.push($scope.All);
+
+            $scope.AvailablePlayers = $scope.gameFilters.players;
+            $scope.AvailablePlayers.push($scope.All);
+
             console.log(response.data)
         }, function errorCallback(response) {
             console.log(response)
         });
     };
 
-    $scope.getBestScorers = function () {
+    $scope.getFilteredGames = function () {
         $http({
             method: 'GET',
-            url: '/api/best_scorers'
+            url: '/api/games'
         }).then(function successCallback(response) {
-            $scope.bestScorers = response.data;
+            $scope.filteredGames = response.data;
             console.log(response.data)
         }, function errorCallback(response) {
             console.log(response)
         });
     };
 
-    $scope.getBestAssisters = function () {
+    $scope.getTopPlayersStats = function () {
         $http({
             method: 'GET',
-            url: '/api/best_assisters'
+            url: '/api/top_players_stats'
         }).then(function successCallback(response) {
-            $scope.bestAssisters = response.data;
+            $scope.topPlayersStats = response.data;
+
+            $scope.bestScorers = $scope.topPlayersStats.best_scorers;
+            $scope.bestAssisters = $scope.topPlayersStats.best_assisters;
+            $scope.mostYellowCarded = $scope.topPlayersStats.most_yellow_carded;
+            $scope.mostRedCarded = $scope.topPlayersStats.most_red_carded;
+            $scope.mostSubstituteOff = $scope.topPlayersStats.most_substitute_off;
+            $scope.mostSubstituteIn = $scope.topPlayersStats.most_substitute_in;
+            $scope.mostLineup = $scope.topPlayersStats.most_lineup;
+            $scope.mostCaptain = $scope.topPlayersStats.most_captain;
+            $scope.mostPenaltyMissed = $scope.topPlayersStats.most_penalty_missed;
+            $scope.mostPlayed = $scope.topPlayersStats.most_played;
             console.log(response.data)
         }, function errorCallback(response) {
             console.log(response)
         });
     };
 
-    $scope.getMostYellowCarded = function () {
+    $scope.getCoachesStats = function () {
         $http({
             method: 'GET',
-            url: '/api/most_yellow_carded'
+            url: '/api/top_coaches_stats'
         }).then(function successCallback(response) {
-            $scope.mostYellowCarded = response.data;
+            $scope.topCoachesStats = response.data;
+
+            $scope.mostTrainedCoach = $scope.topCoachesStats.most_trained;
+            $scope.mostWinnerCoach = $scope.topCoachesStats.most_winner;
+            $scope.mostLoserCoach = $scope.topCoachesStats.most_loser;
+            $scope.mostWinnerCoachByPercentage = $scope.topCoachesStats.most_winner_by_percentage;
+            $scope.mostLoserCoachByPercentage = $scope.topCoachesStats.most_loser_by_percentage;
+
             console.log(response.data)
         }, function errorCallback(response) {
             console.log(response)
         });
     };
 
-    $scope.getMostLineupPlayers = function () {
+    $scope.getLongestStreaks = function () {
         $http({
             method: 'GET',
-            url: '/api/most_lineup_players'
+            url: '/api/longest_streaks'
         }).then(function successCallback(response) {
-            $scope.mostLineupPlayers = response.data;
-            console.log(response.data)
-        }, function errorCallback(response) {
-            console.log(response)
-        });
-    };
-    
-    $scope.getMostTrainedCoach = function () {
-        $http({
-            method: 'GET',
-            url: '/api/most_trained_coach'
-        }).then(function successCallback(response) {
-            $scope.mostTrainedCoach = response.data;
-            console.log(response.data)
-        }, function errorCallback(response) {
-            console.log(response)
-        });
-    };
-    
-    $scope.getMostWinnerCoach = function () {
-        $http({
-            method: 'GET',
-            url: '/api/most_winner_coach'
-        }).then(function successCallback(response) {
-            $scope.mostWinnerCoach = response.data;
-            console.log(response.data)
-        }, function errorCallback(response) {
-            console.log(response)
-        });
-    };
-    
-    $scope.getMostLoserCoach = function () {
-        $http({
-            method: 'GET',
-            url: '/api/most_loser_coach'
-        }).then(function successCallback(response) {
-            $scope.mostLoserCoach = response.data;
-            console.log(response.data)
-        }, function errorCallback(response) {
-            console.log(response)
-        });
-    };
-    
-    $scope.getMostWinnerCoachByPercentage = function () {
-        $http({
-            method: 'GET',
-            url: '/api/most_winner_coach_by_percentage'
-        }).then(function successCallback(response) {
-            $scope.mostWinnerCoachByPercentage = response.data;
-            console.log(response.data)
-        }, function errorCallback(response) {
-            console.log(response)
-        });
-    };
-    
-    $scope.getMostLoserCoachByPercentage = function () {
-        $http({
-            method: 'GET',
-            url: '/api/most_loser_coach_by_percentage'
-        }).then(function successCallback(response) {
-            $scope.mostLoserCoachByPercentage = response.data;
+            $scope.longestStreaks = response.data;
             console.log(response.data)
         }, function errorCallback(response) {
             console.log(response)
         });
     };
 
-    $scope.getLongestWinsStreakGames = function () {
+    $scope.getAverages = function () {
         $http({
             method: 'GET',
-            url: '/api/longest_wins_streak_games'
+            url: '/api/averages'
         }).then(function successCallback(response) {
-            $scope.longestWinsStreakGames = response.data;
+            $scope.averages = response.data;
             console.log(response.data)
         }, function errorCallback(response) {
             console.log(response)
         });
     };
 
-    $scope.getLongestUnbeatenStreakGames = function () {
+    $scope.getResultsSummary = function () {
         $http({
             method: 'GET',
-            url: '/api/longest_unbeaten_streak_games'
+            url: '/api/results_summary'
         }).then(function successCallback(response) {
-            $scope.longestUnbeatenStreakGames = response.data;
+            $scope.resultsSummary = response.data;
             console.log(response.data)
         }, function errorCallback(response) {
             console.log(response)
         });
     };
 
-    $scope.getLongestScoredStreakGames = function () {
-        $http({
-            method: 'GET',
-            url: '/api/longest_score_streak_games'
-        }).then(function successCallback(response) {
-            $scope.longestScoredStreakGames= response.data;
-            console.log(response.data)
-        }, function errorCallback(response) {
-            console.log(response)
-        });
+    $scope.gameSort = function(keyName){
+        $scope.gameSortKey = keyName;   // Set the sortKey to the param passed.
+        $scope.gameReverse = !$scope.gameReverse; // Perform negate on GameReverse (true->false, false->true).
     };
 
-    $scope.getLongestCleanSheetStreakGames = function () {
+    $scope.ReportGame = function() {
+
+        data = {
+            game : $scope.GameToReport,
+            message : $scope.ReportMessage
+        };
+
         $http({
-            method: 'GET',
-            url: '/api/longest_clean_sheet_streak_games'
+            method: 'POST',
+            data: data,
+            url: '/api/request'
         }).then(function successCallback(response) {
-            $scope.longestCleanSheetStreakGames= response.data;
-            console.log(response.data)
+            $scope.CancelReport();
         }, function errorCallback(response) {
-            console.log(response)
-        });
+            $scope.ReportMessage = "אירעה שגיאה , אנא נסה שוב";
+        })};
+
+    $scope.SaveReportedGame = function(game) {
+        $scope.GameToReport = game;
+        $scope.WantToReport = true;
+        $scope.ReportMessage = "ספר מה הדיבור";
     };
 
-
+    $scope.CancelReport = function() {
+        $scope.WantToReport = false;
+        $scope.GameToReport = undefined;
+        $scope.ReportMessage = "ספר מה הדיבור";
+    };
 
     angular.element(document).ready(function () {
-        $scope.getAvailableOpponents();
-        $scope.getAvailableCompetitions();
+        $scope.getAvailableGameFilterOptions();
     });
 });
