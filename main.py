@@ -2,6 +2,7 @@ import os
 import pickle
 import uuid
 import time
+import pprint
 
 from dateutil import parser as date_parser
 from flask import Flask, request, jsonify, session
@@ -31,10 +32,10 @@ def save_user_request():
     random_file_name = uuid.uuid4().hex
     random_file_path = os.path.join(request_folder_path, "requests_from_site", random_file_name + ".txt")
 
+    request.json['time'] = time.ctime()
+
     with open(random_file_path, 'w') as request_file:
-        request_file.write(str(request.json))
-        request_file.write("\n\n")
-        request_file.write(time.ctime())
+        request_file.write(pprint.pformat(request.json))
 
     return jsonify("OK")
 
