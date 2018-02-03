@@ -1,5 +1,5 @@
 var app = angular.module('MaccabiStatsApp', ['angularUtils.directives.dirPagination']);
-app.controller('MaccabiStatsController', function ($scope, $http) {
+app.controller('MaccabiStatsController', function ($scope, $http, $window) {
 
     $scope.All = "הכל";
     $scope.firstLeague = "ליגה ראשונה";
@@ -190,7 +190,7 @@ app.controller('MaccabiStatsController', function ($scope, $http) {
 
         data = {
             game : $scope.GameToReport,
-            message : $scope.ReportMessage
+            message : document.getElementById('ReportMessageText').value
         };
 
         $http({
@@ -204,9 +204,10 @@ app.controller('MaccabiStatsController', function ($scope, $http) {
         })};
 
     $scope.SaveReportedGame = function(game) {
+        $scope.ReportMessage = "ספר מה הדיבור";
         $scope.GameToReport = game;
         $scope.WantToReport = true;
-        $scope.ReportMessage = "ספר מה הדיבור";
+        $window.scrollTo(0, 0);
     };
 
     $scope.CancelReport = function() {

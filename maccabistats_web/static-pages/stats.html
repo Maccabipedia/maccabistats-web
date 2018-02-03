@@ -72,31 +72,31 @@
                         <table class="table table-striped table-stats table-hover table-sm" ng-if="resultsSummary">
                             <caption>סיכום</caption>
                             <tbody>
-                            <tr ng-if="resultsSummary.wins_count">
+                            <tr>
                                 <td>{{ resultsSummary.wins_count}}</td>
                                 <td>נצחונות</td>
                             </tr>
-                            <tr ng-if="resultsSummary.losses_count">
+                            <tr>
                                 <td>{{ resultsSummary.losses_count }}</td>
                                 <td>הפסדים</td>
                             </tr>
-                            <tr ng-if="resultsSummary.ties_count">
+                            <tr>
                                 <td>{{ resultsSummary.ties_count}}</td>
                                 <td>תיקו</td>
                             </tr>
-                            <tr ng-if="resultsSummary.total_goals_for_maccabi">
+                            <tr>
                                 <td>{{ resultsSummary.total_goals_for_maccabi}}</td>
                                 <td>סך שערים לזכות מכבי</td>
                             </tr>
-                            <tr ng-if="resultsSummary.total_goals_against_maccabi">
+                            <tr>
                                 <td>{{ resultsSummary.total_goals_against_maccabi}}</td>
                                 <td>סך שערים לזכות מכבי</td>
                             </tr>
-                            <tr ng-if="averages.goals_for_maccabi">
+                            <tr>
                                 <td>{{ averages.goals_for_maccabi }}</td>
                                 <td>ממוצע שערים לזכות מכבי</td>
                             </tr>
-                            <tr ng-if="averages.goals_against_maccabi">
+                            <tr>
                                 <td>{{ averages.goals_against_maccabi }}</td>
                                 <td>ממוצע שערים לחובת מכבי</td>
                             </tr>
@@ -104,6 +104,12 @@
                         </table>
                     </div>
 
+                    <div id="ReportMessageDiv" ng-show="WantToReport">
+                        <textarea id="ReportMessageText" ng-model="ReportMessage" style="text-align:right" rows="4" cols="50"> </textarea>
+                        </br>
+                        <button class="btn btn-info" ng-click="ReportGame()">שלח</button>
+                        <button class="btn btn-info" ng-click="CancelReport()">התבלבלתי</button>
+                    </div>
                 </td>
             </tr>
             <tr>
@@ -251,12 +257,6 @@
             </tbody>
         </table>
 
-        <div ng-if="WantToReport">
-        <textarea ng-model="ReportMessage" ng-change="ReportMessage = 222 " style="text-align:right" rows="4" cols="50"> </textarea>
-            <button class="btn btn-info" ng-click="ReportGame()">שלח</button>
-            <button class="btn btn-info" ng-click="CancelReport()">התבלבלתי</button>
-        </div>
-
         <dir-pagination-controls max-size="7" direction-links="true" boundary-links="true" pagination-id="filteredGames"> </dir-pagination-controls>
 
     </div>
@@ -342,12 +342,6 @@
                 </tbody>
             </table>
 
-            <div ng-if="WantToReport">
-                <textarea ng-model="ReportMessage" style="text-align:right" rows="4" cols="50"> </textarea>
-                <button class="btn btn-info" ng-click="ReportGame()">שלח</button>
-                <button class="btn btn-info" ng-click="CancelReport()">התבלבלתי</button>
-            </div>
-
             <dir-pagination-controls max-size="7" direction-links="true" boundary-links="true" pagination-id="longestWinsStreak"> </dir-pagination-controls>
 
         </div>
@@ -398,12 +392,6 @@
                 </tr>
                 </tbody>
             </table>
-
-            <div ng-if="WantToReport">
-                <textarea ng-model="ReportMessage" style="text-align:right" rows="4" cols="50"> </textarea>
-                <button class="btn btn-info" ng-click="ReportGame()">שלח</button>
-                <button class="btn btn-info" ng-click="CancelReport()">התבלבלתי</button>
-            </div>
 
             <dir-pagination-controls max-size="7" direction-links="true" boundary-links="true" pagination-id="longestUnbeatenStreak"> </dir-pagination-controls>
 
@@ -456,12 +444,6 @@
                 </tbody>
             </table>
 
-            <div ng-if="WantToReport">
-                <textarea ng-model="ReportMessage" style="text-align:right" rows="4" cols="50"> </textarea>
-                <button class="btn btn-info" ng-click="ReportGame()">שלח</button>
-                <button class="btn btn-info" ng-click="CancelReport()">התבלבלתי</button>
-            </div>
-
             <dir-pagination-controls max-size="7" direction-links="true" boundary-links="true" pagination-id="longestScoredStreak"> </dir-pagination-controls>
 
         </div>
@@ -513,12 +495,6 @@
                 </tbody>
             </table>
 
-            <div ng-if="WantToReport">
-                <textarea ng-model="ReportMessage" style="text-align:right" rows="4" cols="50"> </textarea>
-                <button class="btn btn-info" ng-click="ReportGame()">שלח</button>
-                <button class="btn btn-info" ng-click="CancelReport()">התבלבלתי</button>
-            </div>
-
             <dir-pagination-controls max-size="7" direction-links="true" boundary-links="true" pagination-id="longestCleanSheetStreak"> </dir-pagination-controls>
 
         </div>
@@ -569,12 +545,6 @@
                 </tr>
                 </tbody>
             </table>
-
-            <div ng-if="WantToReport">
-                <textarea ng-model="ReportMessage" style="text-align:right" rows="4" cols="50"> </textarea>
-                <button class="btn btn-info" ng-click="ReportGame()">שלח</button>
-                <button class="btn btn-info" ng-click="CancelReport()">התבלבלתי</button>
-            </div>
 
             <dir-pagination-controls max-size="7" direction-links="true" boundary-links="true" pagination-id="longestGoalsFromBenchStreak"> </dir-pagination-controls>
 
