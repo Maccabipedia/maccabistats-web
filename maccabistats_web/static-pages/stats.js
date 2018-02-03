@@ -35,15 +35,13 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             after_date: $scope.AfterDate,
             only_wins: $scope.OnlyWins
         };
-        console.log(data);
         $http({
             method: 'POST',
             data: data,
             url: '/api/stats'
         }).then(function successCallback(response) {
             $scope.msg = response.data;
-            console.log(response.data);
-            
+
             // Get the new stats from the server
             $scope.getFilteredGames();
 
@@ -85,9 +83,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             $scope.AvailablePlayers = $scope.gameFilters.players;
             $scope.AvailablePlayers.push($scope.All);
 
-            console.log(response.data)
         }, function errorCallback(response) {
-            console.log(response)
         });
     };
 
@@ -97,9 +93,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             url: '/api/games'
         }).then(function successCallback(response) {
             $scope.filteredGames = response.data;
-            console.log(response.data)
         }, function errorCallback(response) {
-            console.log(response)
         });
     };
 
@@ -120,9 +114,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             $scope.mostCaptain = $scope.topPlayersStats.most_captain;
             $scope.mostPenaltyMissed = $scope.topPlayersStats.most_penalty_missed;
             $scope.mostPlayed = $scope.topPlayersStats.most_played;
-            console.log(response.data)
         }, function errorCallback(response) {
-            console.log(response)
         });
     };
 
@@ -139,9 +131,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             $scope.mostWinnerCoachByPercentage = $scope.topCoachesStats.most_winner_by_percentage;
             $scope.mostLoserCoachByPercentage = $scope.topCoachesStats.most_loser_by_percentage;
 
-            console.log(response.data)
         }, function errorCallback(response) {
-            console.log(response)
         });
     };
 
@@ -151,9 +141,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             url: '/api/longest_streaks'
         }).then(function successCallback(response) {
             $scope.longestStreaks = response.data;
-            console.log(response.data)
         }, function errorCallback(response) {
-            console.log(response)
         });
     };
 
@@ -163,9 +151,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             url: '/api/averages'
         }).then(function successCallback(response) {
             $scope.averages = response.data;
-            console.log(response.data)
         }, function errorCallback(response) {
-            console.log(response)
         });
     };
 
@@ -175,9 +161,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             url: '/api/results_summary'
         }).then(function successCallback(response) {
             $scope.resultsSummary = response.data;
-            console.log(response.data)
         }, function errorCallback(response) {
-            console.log(response)
         });
     };
 
