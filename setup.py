@@ -9,7 +9,7 @@ setup(
     license='MIT',
     description='Maccabi tel-aviv football team statistics manipulation web-site',
     python_requires='>=3',
-    install_requires=["maccabistats==1.2.0",
+    install_requires=["maccabistats==1.3.0",
                       "flask==0.12.2",
                       "python-dateutil==2.6.1"]
 )

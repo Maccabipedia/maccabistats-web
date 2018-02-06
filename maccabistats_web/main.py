@@ -73,11 +73,11 @@ def get_games():
 def get_games_filters():
     g = get_maccabi_stats()
     return jsonify(dict(
-        opponents=list(g.available_opponents),
-        coaches=list(g.available_coaches),
-        referees=list(g.available_referees),
-        competitions=list(g.available_competitions),
-        stadiums=list(g.available_stadiums),
+        opponents=g.available_opponents,
+        coaches=g.available_coaches,
+        referees=g.available_referees,
+        competitions=g.available_competitions,
+        stadiums=g.available_stadiums,
         players=list(set(player.name for player in g.available_players))
         # Set is to avoid dups in client side, list is to allow json it.
     ))
@@ -96,11 +96,19 @@ def get_top_players_stats():
         most_lineup=[dict(t[0].__dict__, lineup=t[1]) for t in games.players.most_lineup_players],
         most_captain=[dict(t[0].__dict__, captain_times=t[1]) for t in games.players.most_captains],
         most_penalty_missed=[dict(t[0].__dict__, penalty_missed=t[1]) for t in games.players.most_penalty_missed],
-        most_played=[dict(t[0].__dict__, played=t[1]) for t in games.players.most_played]))
+        most_played=[dict(t[0].__dict__, played=t[1]) for t in games.players.most_played],
+        most_winners=[dict(t[0].__dict__, wins=t[1]) for t in games.players.most_winners],
+        most_losers=[dict(t[0].__dict__, losses=t[1]) for t in games.players.most_losers],
+        most_unbeaten=[dict(t[0].__dict__, unbeaten=t[1]) for t in games.players.most_unbeaten],
+        most_clean_sheet=[dict(t[0].__dict__, clean_sheet=t[1]) for t in games.players.most_clean_sheet],
+        most_winners_by_percentage=games.players.get_most_winners_by_percentage(),
+        most_losers_by_percentage=games.players.get_most_losers_by_percentage(),
+        most_unbeaten_by_percentage=games.players.get_most_unbeaten_by_percentage(),
+        most_clean_sheet_by_percentage=games.players.get_most_clean_sheet_by_percentage(),))
 
 
 @app.route("/api/top_coaches_stats", methods=["GET"])
-def get_most_trained_coach():
+def get_top_coaches_stats():
     games = load_session_games_from_disk()
     return jsonify(dict(
         most_trained=[dict(name=t[0], trained=t[1]) for t in games.coaches.most_trained_coach],
@@ -138,6 +146,45 @@ def _get_most_loser_coach_by_percentage():
     return most_loser_coaches
 
 
+@app.route("/api/top_referees_stats", methods=["GET"])
+def get_top_referees_stats():
+    games = load_session_games_from_disk()
+    return jsonify(dict(
+        most_judged=[dict(name=t[0], judged=t[1]) for t in games.referees.most_judged_referee],
+        best_referee=[dict(name=t[0], wins=t[1]) for t in games.referees.best_referee],
+        worst_referee=[dict(name=t[0], losses=t[1]) for t in games.referees.worst_referee],
+        best_referee_by_percentage=_get_best_referee_by_percentage(),
+        worst_referee_by_percentage=_get_worst_referee_by_percentage()))
+
+
+def _get_best_referee_by_percentage():
+    games = load_session_games_from_disk()
+    best_referees = []
+
+    for item in games.referees.best_referee_by_percentage:
+        name = item[0].split("-")[0].strip()
+        games_judged = item[0].split("-")[1].strip()
+        percentages = item[1]
+
+        best_referees.append(dict(name=name, games_judged=games_judged, wins_percentages=percentages))
+
+    return best_referees
+
+
+def _get_worst_referee_by_percentage():
+    games = load_session_games_from_disk()
+    worst_referee = []
+
+    for item in games.referees.worst_referee_by_percentage:
+        name = item[0].split("-")[0].strip()
+        games_judged = item[0].split("-")[1].strip()
+        percentages = item[1]
+
+        worst_referee.append(dict(name=name, games_judged=games_judged, losses_percentages=percentages))
+
+    return worst_referee
+
+
 @app.route("/api/longest_streaks", methods=["GET"])
 def get_longest_streaks():
     games = load_session_games_from_disk()
@@ -146,7 +193,8 @@ def get_longest_streaks():
         unbeaten=[game.json_dict() for game in games.streaks.get_longest_unbeaten_streak_games()],
         scored=[game.json_dict() for game in games.streaks.get_longest_score_at_least_games(1)],
         clean_sheet=[game.json_dict() for game in games.streaks.get_longest_clean_sheet_games()],
-        goals_from_bench=[game.json_dict() for game in games.streaks.get_longest_goals_from_bench_games()]))
+        goals_from_bench=[game.json_dict() for game in games.streaks.get_longest_goals_from_bench_games()],
+        ties=[game.json_dict() for game in games.streaks.get_longest_ties_streak_games()]))
 
 
 @app.route("/api/averages", methods=["GET"])
@@ -160,25 +208,13 @@ def get_average_goals_for_maccabi():
 def get_results_summary():
     games = load_session_games_from_disk()
     total_goals_for_maccabi = sum(game.maccabi_team.score for game in games)
-    total_goals_againt_maccabi = sum(game.not_maccabi_team.score for game in games)
+    total_goals_against_maccabi = sum(game.not_maccabi_team.score for game in games)
 
     return jsonify(dict(wins_count=games.results.wins_count,
                         losses_count=games.results.losses_count,
                         ties_count=games.results.ties_count,
                         total_goals_for_maccabi=total_goals_for_maccabi,
-                        total_goals_against_maccabi=total_goals_againt_maccabi))
-
-
-@app.route("/api/average_goals_for_maccabi", methods=["GET"])
-def get_averages():
-    games = load_session_games_from_disk()
-    return jsonify(games.averages.goals_for_maccabi)
-
-
-@app.route("/api/average_goals_against_maccabi", methods=["GET"])
-def get_average_goals_against_maccabi():
-    games = load_session_games_from_disk()
-    return jsonify(games.averages.goals_against_maccabi)
+                        total_goals_against_maccabi=total_goals_against_maccabi))
 
 
 def filter_by_date(maccabi_games, before_date, after_date):

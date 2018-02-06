@@ -1,0 +1,25 @@
+------ Version 0.8.0 ------
+
+	Add support for maccabistats version 1.3.0!
+	Main features:
+		referees stats.
+		players stats extended by those who won\lost\unbeaten most games, and with percentage from overall games.
+
+------ Version 0.7.1 ------
+	
+	Add "Ive found error button", to let users notify about statistics error they have found
+
+
+------ Version 0.7.0 ------
+
+
+	## Summary ##
+	
+		Support maccabistats python package version 1.2.0 (may be installed from pypi)
+		maccabistats-web is python package!
+		
+	Main tabs are:
+	* Players
+	* Coaches
+	* Games (With maccabigames 1.2.0 filters)
+	* Streaks

@@ -17,6 +17,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
 
         $scope.topPlayersStats = undefined;
         $scope.topCoachesStats = undefined;
+        $scope.topRefereesStats = undefined;
         $scope.longestStreaks = undefined;
 
         $scope.averages = undefined;
@@ -47,6 +48,7 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
 
             $scope.getTopPlayersStats();
             $scope.getCoachesStats();
+            $scope.getRefereesStats();
             $scope.getLongestStreaks();
 
             $scope.getAverages();
@@ -114,6 +116,14 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             $scope.mostCaptain = $scope.topPlayersStats.most_captain;
             $scope.mostPenaltyMissed = $scope.topPlayersStats.most_penalty_missed;
             $scope.mostPlayed = $scope.topPlayersStats.most_played;
+            $scope.mostWinnersPlayers = $scope.topPlayersStats.most_winners;
+            $scope.mostLosersPlayers = $scope.topPlayersStats.most_losers;
+            $scope.mostUnbeatenPlayers = $scope.topPlayersStats.most_unbeaten;
+            $scope.mostCleanSheetPlayers = $scope.topPlayersStats.most_clean_sheet;
+            $scope.mostWinnersPlayersByPercentage = $scope.topPlayersStats.most_winners_by_percentage;
+            $scope.mostLosersPlayersByPercentage = $scope.topPlayersStats.most_losers_by_percentage;
+            $scope.mostUnbeatenPlayersByPercentage = $scope.topPlayersStats.most_unbeaten_by_percentage;
+            $scope.mostCleanSheetPlayersByPercentage = $scope.topPlayersStats.most_clean_sheet_by_percentage;
         }, function errorCallback(response) {
         });
     };
@@ -130,6 +140,23 @@ app.controller('MaccabiStatsController', function ($scope, $http, $window) {
             $scope.mostLoserCoach = $scope.topCoachesStats.most_loser;
             $scope.mostWinnerCoachByPercentage = $scope.topCoachesStats.most_winner_by_percentage;
             $scope.mostLoserCoachByPercentage = $scope.topCoachesStats.most_loser_by_percentage;
+
+        }, function errorCallback(response) {
+        });
+    };
+
+    $scope.getRefereesStats = function () {
+        $http({
+            method: 'GET',
+            url: '/api/top_referees_stats'
+        }).then(function successCallback(response) {
+            $scope.topRefereesStats = response.data;
+
+            $scope.mostJudgedReferee = $scope.topRefereesStats.most_judged;
+            $scope.bestReferee = $scope.topRefereesStats.best_referee;
+            $scope.worstReferee = $scope.topRefereesStats.worst_referee;
+            $scope.bestRefereeByPercentage = $scope.topRefereesStats.best_referee_by_percentage;
+            $scope.worstRefereeByPercentage = $scope.topRefereesStats.worst_referee_by_percentage;
 
         }, function errorCallback(response) {
         });

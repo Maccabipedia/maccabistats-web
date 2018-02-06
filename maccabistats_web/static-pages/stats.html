@@ -38,6 +38,9 @@
                 <a class="nav-link" data-toggle="collapse" href="#coaches-stats">מאמנים</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" href="#referees-stats">שופטים</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#games">משחקים</a>
             </li>
             <li class="nav-item">
@@ -290,6 +293,10 @@
                 <tr ng-if=longestStreaks.goals_from_bench>
                     <td>רצף משחקים עם שערים מהספסל</td>
                     <td>{{ longestStreaks.goals_from_bench.length }}</td>
+                </tr>
+                <tr ng-if=longestStreaks.ties>
+                    <td>רצף תיקו</td>
+                    <td>{{ longestStreaks.ties.length }}</td>
                 </tr>
                 </tbody>
             </table>
@@ -550,6 +557,58 @@
 
         </div>
 
+
+        <div class="col-md-12 div-left">
+
+            <form style="float: right" class="form-inline">
+                <div class="form-group">
+                    <input style="text-align:right" type="text" ng-model="longestTiesStreakSearchForm" class="form-control" placeholder="חפש"> &nbsp &nbsp
+                    <label >חפש במשחקים</label>
+                </div>
+            </form>
+
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>רצף תיקו</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th ng-click="gameSort('date')">תאריך</th>
+                    <th ng-click="gameSort('stadium')">אצטדיון</th>
+                    <th ng-click="gameSort('competition')">מפעל</th>
+                    <th ng-click="gameSort('fixture')"> מחזור</th>
+                    <th ng-click="gameSort('crowd')">קהל</th>
+                    <th ng-click="gameSort('referee')">שופט</th>
+                    <th ng-click="gameSort('home_team.name')">שם קבוצת בית</th>
+                    <th ng-click="gameSort('home_team.score')">תוצאה קבוצת בית</th>
+                    <th ng-click="gameSort('home_team.coach')">מאמן קבוצת בית</th>
+                    <th ng-click="gameSort('away_team.name')">שם קבוצת חוץ</th>
+                    <th ng-click="gameSort('away_team.score')">תוצאה קבוצת חוץ</th>
+                    <th ng-click="gameSort('away_team.coach')">מאמן קבוצת חוץ</th>
+                    <th>מצאתי משהו</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr dir-paginate="game in longestStreaks.ties | orderBy: gameSortKey: gameReverse | filter: longestTiesStreakSearchForm | itemsPerPage: limit" pagination-id="longestTiesStreak">
+                    <td>{{ game.date | date: "shortDate" }}</td>
+                    <td>{{ game.stadium }}</td>
+                    <td>{{ game.competition }}</td>
+                    <td>{{ game.fixture }}</td>
+                    <td>{{ game.crowd }}</td>
+                    <td>{{ game.referee }}</td>
+                    <td>{{ game.home_team.name }}</td>
+                    <td>{{ game.home_team.score }}</td>
+                    <td>{{ game.home_team.coach }}</td>
+                    <td>{{ game.away_team.name }}</td>
+                    <td>{{ game.away_team.score }}</td>
+                    <td>{{ game.away_team.coach }}</td>
+                    <td> <button class="btn btn-primary" ng-click="SaveReportedGame(game)">מצאתי טעות</button> </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <dir-pagination-controls max-size="7" direction-links="true" boundary-links="true" pagination-id="longestTiesStreak"> </dir-pagination-controls>
+
+        </div>
+
     </div>
 
     <div class="col-md-10 collapse in div-left" id="players-stats" ng-if="topPlayersStats">
@@ -754,6 +813,174 @@
             </table>
         </div>
 
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>משחקים שמכבי ניצחה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>מספר משחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostWinnersPlayers | limitTo:limit">
+                    <td>{{ player.wins }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>משחקים שמכבי הפסידה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>מספר משחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostLosersPlayers | limitTo:limit">
+                    <td>{{ player.losses }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>משחקים שמכבי לא הפסידה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>מספר משחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostUnbeatenPlayers | limitTo:limit">
+                    <td>{{ player.unbeaten }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>משחקים שמכבי שמרה בהם על רשת נקייה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>מספר משחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostCleanSheetPlayers | limitTo:limit">
+                    <td>{{ player.clean_sheet }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>אחוז המשחקים שמכבי ניצחה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים ששיחק</th>
+                    <th>אחוז המשחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostWinnersPlayersByPercentage | limitTo:limit">
+                    <td>{{ player.total_games }}</td>
+                    <td>{{ player.percentage }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>אחוז המשחקים שמכבי הפסידה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים ששיחק</th>
+                    <th>אחוז המשחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostLosersPlayersByPercentage | limitTo:limit">
+                    <td>{{ player.total_games }}</td>
+                    <td>{{ player.percentage }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>אחוז משחקים שמכבי לא נוצחה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים ששיחק</th>
+                    <th>אחוז המשחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostUnbeatenPlayersByPercentage | limitTo:limit">
+                    <td>{{ player.total_games }}</td>
+                    <td>{{ player.percentage }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>אחוז המשחקים שמכבי שמרה בהם על רשת נקייה כשהוא שותף</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים ששיחק</th>
+                    <th>אחוז המשחקים</th>
+                    <th>שם שחקן</th>
+                    <th>מספר שחקן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="player in mostCleanSheetPlayersByPercentage | limitTo:limit">
+                    <td>{{ player.total_games }}</td>
+                    <td>{{ player.percentage }}</td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.number }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
     <div class="col-md-10 collapse in div-left" id="coaches-stats" ng-if="topCoachesStats">
@@ -855,6 +1082,108 @@
 
 
     </div>
+
+    <div class="col-md-10 collapse in div-left" id="referees-stats" ng-if="topRefereesStats">
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>שופטים ששפטו</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים ששפט</th>
+                    <th>שם שופט</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="judge in mostJudgedReferee | limitTo:limit">
+                    <td>{{ judge.judged }}</td>
+                    <td>{{ judge.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>שופטים שניהלו הכי הרבה משחקים שמכבי ניצחה בהם</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>נצחונות למכבי</th>
+                    <th>שם שופט</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="judge in bestReferee | limitTo:limit">
+                    <td>{{ judge.wins }}</td>
+                    <td>{{ judge.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>שופטים שניהלו הכי הרבה משחקים שמכבי הפסידה בהם</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים שהפסיד</th>
+                    <th>שם מאמן</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="judge in worstReferee | limitTo:limit">
+                    <td>{{ judge.losses }}</td>
+                    <td>{{ judge.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>שופטים שניהלו הכי הרבה משחקים שמכבי ניצחה בהם באחוזים</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים ששפט</th>
+                    <th>משחקים שהם מכבי ניצחה %</th>
+                    <th>שם שופט</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="judge in bestRefereeByPercentage | limitTo:limit">
+                    <td>{{ judge.games_judged }}</td>
+                    <td>{{ judge.wins_percentages }}</td>
+                    <td>{{ judge.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-3 div-left">
+            <table class="table table-striped table-stats table-hover table-sm">
+                <caption>שופטים שניהלו הכי הרבה משחקים שמכבי הפסידה בהם באחוזים</caption>
+                <thead class="thead-dark">
+                <tr>
+                    <th>משחקים ששפט</th>
+                    <th>משחקים שבהם מכבי הפסידה %</th>
+                    <th>שם שופט</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="judge in worstRefereeByPercentage | limitTo:limit">
+                    <td>{{ judge.games_judged }}</td>
+                    <td>{{ judge.losses_percentages }}</td>
+                    <td>{{ judge.name }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+
+
 
 </div>
 </body>
