@@ -86,6 +86,8 @@ def get_games_filters():
 @app.route("/api/top_players_stats", methods=["GET"])
 def get_top_players_stats():
     games = load_session_games_from_disk()
+    minimum_games_required = 10
+
     return jsonify(dict(
         best_scorers=[dict(t[0].__dict__, goals=t[1]) for t in games.players.best_scorers],
         best_assisters=[dict(t[0].__dict__, assists=t[1]) for t in games.players.best_assisters],
@@ -101,10 +103,10 @@ def get_top_players_stats():
         most_losers=[dict(t[0].__dict__, losses=t[1]) for t in games.players.most_losers],
         most_unbeaten=[dict(t[0].__dict__, unbeaten=t[1]) for t in games.players.most_unbeaten],
         most_clean_sheet=[dict(t[0].__dict__, clean_sheet=t[1]) for t in games.players.most_clean_sheet],
-        most_winners_by_percentage=games.players.get_most_winners_by_percentage(),
-        most_losers_by_percentage=games.players.get_most_losers_by_percentage(),
-        most_unbeaten_by_percentage=games.players.get_most_unbeaten_by_percentage(),
-        most_clean_sheet_by_percentage=games.players.get_most_clean_sheet_by_percentage(),))
+        most_winners_by_percentage=games.players.get_most_winners_by_percentage(minimum_games_required),
+        most_losers_by_percentage=games.players.get_most_losers_by_percentage(minimum_games_required),
+        most_unbeaten_by_percentage=games.players.get_most_unbeaten_by_percentage(minimum_games_required),
+        most_clean_sheet_by_percentage=games.players.get_most_clean_sheet_by_percentage(minimum_games_required),))
 
 
 @app.route("/api/top_coaches_stats", methods=["GET"])
@@ -213,6 +215,7 @@ def get_results_summary():
     return jsonify(dict(wins_count=games.results.wins_count,
                         losses_count=games.results.losses_count,
                         ties_count=games.results.ties_count,
+                        clean_sheet_count=len([1 for game in games if game.not_maccabi_team.score == 0]),
                         total_goals_for_maccabi=total_goals_for_maccabi,
                         total_goals_against_maccabi=total_goals_against_maccabi))
 
