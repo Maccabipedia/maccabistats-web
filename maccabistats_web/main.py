@@ -215,6 +215,7 @@ def get_results_summary():
     return jsonify(dict(wins_count=games.results.wins_count,
                         losses_count=games.results.losses_count,
                         ties_count=games.results.ties_count,
+                        clean_sheet_count=len([1 for game in games if game.not_maccabi_team.score == 0]),
                         total_goals_for_maccabi=total_goals_for_maccabi,
                         total_goals_against_maccabi=total_goals_against_maccabi))
 
